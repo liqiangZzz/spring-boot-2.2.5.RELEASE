@@ -21,10 +21,11 @@ public class BusinessEventController {
 
 
 	@GetMapping("/event")
-	public void testEvent() {
+	public String testEvent() {
 		// 发送事件
 		MyEvent event = new MyEvent("liqiang");
 		// 发送事件
 		applicationEventPublisher.publishEvent(event);
+		return "success";
 	}
 }

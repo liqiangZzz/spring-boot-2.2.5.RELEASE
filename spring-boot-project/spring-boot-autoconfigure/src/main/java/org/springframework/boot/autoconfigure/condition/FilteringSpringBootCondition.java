@@ -43,11 +43,21 @@ abstract class FilteringSpringBootCondition extends SpringBootCondition
 
 	private ClassLoader beanClassLoader;
 
+	/**
+	 * 匹配自动配置类数组，判断每个类是否应该被包含在自动配置中
+	 * @param autoConfigurationClasses 自动配置类名数组
+	 * @param autoConfigurationMetadata 自动配置元数据
+	 * @return 布尔数组，表示每个自动配置类是否匹配
+	 */
 	@Override
 	public boolean[] match(String[] autoConfigurationClasses, AutoConfigurationMetadata autoConfigurationMetadata) {
+		// 获取条件评估报告实例
 		ConditionEvaluationReport report = ConditionEvaluationReport.find(this.beanFactory);
+		// 获取每个自动配置类的匹配结果 【具体的过滤逻辑（包括检查 @ConditionalOnClass 注解）是在 getOutcomes 抽象方法中实现的】
 		ConditionOutcome[] outcomes = getOutcomes(autoConfigurationClasses, autoConfigurationMetadata);
+		// 创建匹配结果数组
 		boolean[] match = new boolean[outcomes.length];
+		// 遍历所有匹配结果，确定每个配置类是否应该被包含
 		for (int i = 0; i < outcomes.length; i++) {
 			match[i] = (outcomes[i] == null || outcomes[i].isMatch());
 			if (!match[i] && outcomes[i] != null) {

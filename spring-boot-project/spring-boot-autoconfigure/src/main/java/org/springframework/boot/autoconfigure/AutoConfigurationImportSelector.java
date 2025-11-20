@@ -112,13 +112,22 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		if (!isEnabled(annotationMetadata)) {
 			return EMPTY_ENTRY;
 		}
+		//获取元注解中的属性
 		AnnotationAttributes attributes = getAttributes(annotationMetadata);
+		//使用SpringFactoriesLoader 加载classpath路径下META-INF\spring.factories中，
+		//key= org.springframework.boot.autoconfigure.EnableAutoConfiguration对应的value
 		List<String> configurations = getCandidateConfigurations(annotationMetadata, attributes);
+		//去重
 		configurations = removeDuplicates(configurations);
+		// 获取排除的类
 		Set<String> exclusions = getExclusions(annotationMetadata, attributes);
+		//检查排除的类
 		checkExcludedClasses(configurations, exclusions);
+		//过滤排除的类
 		configurations.removeAll(exclusions);
+		//过滤，检查候选配置类上的注解@ConditionalOnClass，如果要求的类不存在，则这个候选类会被过滤不被加载
 		configurations = filter(configurations, autoConfigurationMetadata);
+		//广播事件
 		fireAutoConfigurationImportEvents(configurations, exclusions);
 		return new AutoConfigurationEntry(configurations, exclusions);
 	}
@@ -236,11 +245,20 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 		return (excludes != null) ? Arrays.asList(excludes) : Collections.emptyList();
 	}
 
+	/**
+	 * 过滤自动配置类列表，根据过滤器条件排除不满足要求的配置类
+	 *
+	 * @param configurations 自动配置类全限定名列表
+	 * @param autoConfigurationMetadata 自动配置元数据信息
+	 * @return 过滤后的自动配置类列表
+	 */
 	private List<String> filter(List<String> configurations, AutoConfigurationMetadata autoConfigurationMetadata) {
 		long startTime = System.nanoTime();
 		String[] candidates = StringUtils.toStringArray(configurations);
 		boolean[] skip = new boolean[candidates.length];
 		boolean skipped = false;
+
+		// 遍历所有自动配置导入过滤器，对候选配置类进行匹配过滤
 		for (AutoConfigurationImportFilter filter : getAutoConfigurationImportFilters()) {
 			invokeAwareMethods(filter);
 			boolean[] match = filter.match(candidates, autoConfigurationMetadata);
@@ -252,15 +270,21 @@ public class AutoConfigurationImportSelector implements DeferredImportSelector, 
 				}
 			}
 		}
+
+		// 如果没有配置类被过滤掉，直接返回原始列表
 		if (!skipped) {
 			return configurations;
 		}
+
+		// 构建过滤后的结果列表，只包含未被标记为跳过的配置类
 		List<String> result = new ArrayList<>(candidates.length);
 		for (int i = 0; i < candidates.length; i++) {
 			if (!skip[i]) {
 				result.add(candidates[i]);
 			}
 		}
+
+		// 记录过滤操作的性能日志
 		if (logger.isTraceEnabled()) {
 			int numberFiltered = configurations.size() - result.size();
 			logger.trace("Filtered " + numberFiltered + " auto configuration class in "

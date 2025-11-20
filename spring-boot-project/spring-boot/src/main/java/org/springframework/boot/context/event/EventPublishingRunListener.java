@@ -49,6 +49,9 @@ public class EventPublishingRunListener implements SpringApplicationRunListener,
 
 	private final String[] args;
 
+	/**
+	 * 应用事件多播器
+	 */
 	private final SimpleApplicationEventMulticaster initialMulticaster;
 
 	public EventPublishingRunListener(SpringApplication application, String[] args) {

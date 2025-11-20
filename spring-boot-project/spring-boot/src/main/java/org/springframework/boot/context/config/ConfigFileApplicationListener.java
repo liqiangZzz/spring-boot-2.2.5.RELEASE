@@ -194,7 +194,13 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 		}
 	}
 
+	/**
+	 * 加载环境后处理器列表
+	 *
+	 * @return 返回加载到的EnvironmentPostProcessor实例列表
+	 */
 	List<EnvironmentPostProcessor> loadPostProcessors() {
+		// 通过Spring工厂（spring.factories）加载器加载EnvironmentPostProcessor类型的工厂实例
 		return SpringFactoriesLoader.loadFactories(EnvironmentPostProcessor.class, getClass().getClassLoader());
 	}
 
@@ -318,6 +324,11 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 
 		private Map<DocumentsCacheKey, List<Document>> loadDocumentsCache = new HashMap<>();
 
+		/**
+		 * 构造函数，初始化Loader对象
+		 * @param environment 配置环境对象，用于处理属性源和占位符解析
+		 * @param resourceLoader 资源加载器，用于加载配置资源文件
+		 */
 		Loader(ConfigurableEnvironment environment, ResourceLoader resourceLoader) {
 			// environment对象的赋值
 			this.environment = environment;
@@ -330,6 +341,13 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 					getClass().getClassLoader());
 		}
 
+		/**
+		 * 加载配置文件和profiles信息
+		 * <p>
+		 * 该方法负责初始化配置加载环境，包括创建profile链表、加载默认配置、
+		 * 处理各个profile的配置文件以及应用激活的profiles。
+		 * </p>
+		 */
 		void load() {
 			FilteredPropertySource.apply(this.environment, DEFAULT_PROPERTIES, LOAD_FILTERED_PROPERTY,
 					(defaultProperties) -> {
@@ -514,14 +532,28 @@ public class ConfigFileApplicationListener implements EnvironmentPostProcessor, 
 					.anyMatch((fileExtension) -> StringUtils.endsWithIgnoreCase(name, fileExtension));
 		}
 
+		/**
+		 * 根据文件扩展名加载配置属性文件
+		 *
+		 * @param loader 属性源加载器，用于实际加载配置文件
+		 * @param prefix 文件前缀，通常是"application"
+		 * @param fileExtension 文件扩展名，如".properties"或".yml"
+		 * @param profile 当前激活的配置环境，如"dev"、"prod"等
+		 * @param filterFactory 文档过滤器工厂，用于创建不同类型的文档过滤器
+		 * @param consumer 文档消费者，用于处理加载的配置文档
+		 */
 		private void loadForFileExtension(PropertySourceLoader loader, String prefix, String fileExtension,
 				Profile profile, DocumentFilterFactory filterFactory, DocumentConsumer consumer) {
+			//用于匹配没有指定profile的文档（即默认配置）
 			DocumentFilter defaultFilter = filterFactory.getDocumentFilter(null);
+			//用于匹配与当前profile相关的文档
 			DocumentFilter profileFilter = filterFactory.getDocumentFilter(profile);
 			if (profile != null) {
 				// 如果有profile的情况比如 dev --> application-dev.properties
 				String profileSpecificFile = prefix + "-" + profile + fileExtension;
+				//第一次使用defaultFilter加载，匹配无profile标识的配置部分
 				load(loader, profileSpecificFile, profile, defaultFilter, consumer);
+				// 第二次使用profileFilter加载，匹配profile标识的配置部分
 				load(loader, profileSpecificFile, profile, profileFilter, consumer);
 				// Try profile specific sections in files we've already processed
 				for (Profile processedProfile : this.processedProfiles) {

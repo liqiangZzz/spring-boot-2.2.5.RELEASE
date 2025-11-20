@@ -453,6 +453,7 @@ public class SpringApplication {
 	private SpringApplicationRunListeners getRunListeners(String[] args) {
 		Class<?>[] types = new Class<?>[] { SpringApplication.class, String[].class };
 		return new SpringApplicationRunListeners(logger,
+				// getSpringFactoriesInstances 获取启动时的监听器 文件 key：SpringApplicationRunListener
 				getSpringFactoriesInstances(SpringApplicationRunListener.class, types, this, args));
 	}
 

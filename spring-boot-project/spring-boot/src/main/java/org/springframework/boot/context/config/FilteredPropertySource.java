@@ -46,6 +46,14 @@ class FilteredPropertySource extends PropertySource<PropertySource<?>> {
 		return getSource().getProperty(name);
 	}
 
+	/**
+	 * 应用指定操作到配置环境中的特定属性源，支持过滤特定属性
+	 *
+	 * @param environment 配置环境对象，用于获取和操作属性源
+	 * @param propertySourceName 要操作的属性源名称
+	 * @param filteredProperties 需要过滤的属性集合
+	 * @param operation 要应用的操作，接受一个PropertySource对象作为参数
+	 */
 	static void apply(ConfigurableEnvironment environment, String propertySourceName, Set<String> filteredProperties,
 			Consumer<PropertySource<?>> operation) {
 		// 获取当前环境下的所有的资源加载器
@@ -56,11 +64,13 @@ class FilteredPropertySource extends PropertySource<PropertySource<?>> {
 			operation.accept(null);
 			return;
 		}
+		// 创建过滤后的属性源并替换原属性源
 		propertySources.replace(propertySourceName, new FilteredPropertySource(original, filteredProperties));
 		try {
 			operation.accept(original);
 		}
 		finally {
+			// 操作完成后恢复原始属性源
 			propertySources.replace(propertySourceName, original);
 		}
 	}
